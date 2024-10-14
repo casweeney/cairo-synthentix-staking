@@ -1,25 +1,47 @@
+use starknet::ContractAddress;
+
 #[starknet::interface]
-pub trait IHelloStarknet<TContractState> {
-    fn increase_balance(ref self: TContractState, amount: felt252);
-    fn get_balance(self: @TContractState) -> felt252;
+pub trait IStakingRewards<TContractState> {
+    fn last_time_reward_applicable(self: @TContractState) -> u256;
+    fn reward_per_token(self: @TContractState) -> u256;
+    fn stake(ref self: TContractState, amount: u256);
+    fn withdraw(ref self: TContractState, amount: u256);
+    fn earned(self: @TContractState, account: ContractAddress) -> u256;
+    fn get_reward(ref self: TContractState);
+    fn set_rewards_duration(ref self: TContractState, duration: u256);
+    fn notify_reward_amount(ref self: TContractState, amount: u256);
 }
 
 #[starknet::contract]
-mod HelloStarknet {
+mod StakingRewards {
+    use starknet::ContractAddress;
+    use core::starknet::storage::{
+        StoragePointerReadAccess, StoragePointerWriteAccess, 
+        Map, StoragePathEntry,
+        MutableVecTrait, Vec, VecTrait
+    };
+
     #[storage]
     struct Storage {
-        balance: felt252, 
+        staking_token: ContractAddress,
+        rewards_token: ContractAddress,
+
+        owner: ContractAddress,
+
+        duration: u256,
+        finish_at: u256,
+        updated_at: u256,
+        reward_rate: u256,
+        reward_per_token_stored: u256,
+        user_reward_per_token_paid: Map<ContractAddress, u256>,
+        rewards: Map<ContractAddress, u256>,
+
+        total_supply: u256,
+        balance_of: Map<ContractAddress, u256>,
     }
 
     #[abi(embed_v0)]
-    impl HelloStarknetImpl of super::IHelloStarknet<ContractState> {
-        fn increase_balance(ref self: ContractState, amount: felt252) {
-            assert(amount != 0, 'Amount cannot be 0');
-            self.balance.write(self.balance.read() + amount);
-        }
-
-        fn get_balance(self: @ContractState) -> felt252 {
-            self.balance.read()
-        }
+    impl StakingRewardsImpl of super::IStakingRewards<ContractState> {
+        
     }
 }
