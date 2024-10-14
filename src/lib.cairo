@@ -44,4 +44,16 @@ mod StakingRewards {
     impl StakingRewardsImpl of super::IStakingRewards<ContractState> {
         
     }
+
+    #[generate_trait]
+    impl InternalImpl of InternalTrait {
+        fn update_reward(ref self: ContractState, account: ContractAddress) {
+
+        }
+
+        fn min(self: @ContractState, x: u256, y: u256) -> u256 {
+
+            1
+        }
+    }
 }
