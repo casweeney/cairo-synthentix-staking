@@ -143,7 +143,23 @@ mod StakingRewards {
         }
 
         fn notify_reward_amount(ref self: ContractState, amount: u256) {
+            let block_timestamp: u256 = get_block_timestamp().try_into().unwrap();
 
+            if block_timestamp >= self.finish_at.read() {
+                self.reward_rate.write(amount / self.duration.read())
+            } else {
+                let remaining_rewards = (self.finish_at.read() - block_timestamp) * self.reward_rate.read();
+
+                self.reward_rate.write((amount + remaining_rewards) / self.duration.read());
+            }
+
+            let rewards_token = IERC20Dispatcher { contract_address: self.rewards_token.read() };
+
+            assert!(self.reward_rate.read() > 0, "reward rate = 0");
+            assert!(self.reward_rate.read() * self.duration.read() <= rewards_token.balance_of(get_contract_address()), "reward amount > balance");
+
+            self.finish_at.write(get_block_timestamp().try_into().unwrap() + self.duration.read());
+            self.updated_at.write(get_block_timestamp().try_into().unwrap());
         }
     }
 
