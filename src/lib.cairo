@@ -5,7 +5,7 @@ pub mod mocks;
 mod StakingRewards {
     use core::num::traits::Zero;
     use synthetix_staking::interfaces::istaking_rewards::IStakingRewards;
-    use starknet::{ContractAddress, get_block_timestamp, get_caller_address, get_contract_address};
+    use starknet::{ContractAddress, get_block_timestamp, get_caller_address, get_contract_address, contract_address_const};
     use core::starknet::storage::{
         StoragePointerReadAccess, StoragePointerWriteAccess, 
         Map, StoragePathEntry
@@ -111,6 +111,10 @@ mod StakingRewards {
         }
 
         fn set_rewards_duration(ref self: ContractState, duration: u256) {
+            let caller = get_caller_address();
+
+            assert!(caller == self.owner.read(), "not authorized");
+
             let block_timestamp: u256 = get_block_timestamp().try_into().unwrap();
             assert!(self.finish_at.read() < block_timestamp, "reward duration not finished");
 
@@ -118,6 +122,13 @@ mod StakingRewards {
         }
 
         fn notify_reward_amount(ref self: ContractState, amount: u256) {
+            let caller = get_caller_address();
+            assert!(caller == self.owner.read(), "not authorized");
+
+            let zero_address = self.zero_address();
+
+            self.update_reward(zero_address);
+
             let block_timestamp: u256 = get_block_timestamp().try_into().unwrap();
 
             if block_timestamp >= self.finish_at.read() {
@@ -204,6 +215,10 @@ mod StakingRewards {
             } else {
                 y
             }
+        }
+
+        fn zero_address(self: @ContractState) -> ContractAddress {
+            contract_address_const::<0>()
         }
     }
 }
