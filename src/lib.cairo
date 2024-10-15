@@ -1,42 +1,17 @@
-use starknet::ContractAddress;
-
-#[starknet::interface]
-pub trait IERC20<TContractState> {
-    fn name(self: @TContractState) -> ByteArray;
-    fn symbol(self: @TContractState) -> ByteArray;
-    fn decimals(self: @TContractState) -> u8;
-
-    fn total_supply(self: @TContractState) -> u256;
-    fn balance_of(self: @TContractState, account: ContractAddress) -> u256;
-    fn allowance(self: @TContractState, owner: ContractAddress, spender: ContractAddress) -> u256;
-    
-    fn approve(ref self: TContractState, spender: ContractAddress, amount: u256) -> bool;
-    fn transfer(ref self: TContractState, recipient: ContractAddress, amount: u256) -> bool;
-    fn transfer_from(ref self: TContractState, sender: ContractAddress, recipient: ContractAddress, amount: u256) -> bool;
-}
-
-#[starknet::interface]
-pub trait IStakingRewards<TContractState> {
-    fn last_time_reward_applicable(self: @TContractState) -> u256;
-    fn reward_per_token(self: @TContractState) -> u256;
-    fn stake(ref self: TContractState, amount: u256);
-    fn withdraw(ref self: TContractState, amount: u256);
-    fn earned(self: @TContractState, account: ContractAddress) -> u256;
-    fn get_reward(ref self: TContractState);
-    fn set_rewards_duration(ref self: TContractState, duration: u256);
-    fn notify_reward_amount(ref self: TContractState, amount: u256);
-}
+pub mod interfaces;
 
 #[starknet::contract]
 mod StakingRewards {
     use core::num::traits::Zero;
-    use super::IStakingRewards;
+    use synthetix_staking::interfaces::istaking_rewards::IStakingRewards;
     use starknet::{ContractAddress, get_block_timestamp, get_caller_address, get_contract_address};
     use core::starknet::storage::{
         StoragePointerReadAccess, StoragePointerWriteAccess, 
         Map, StoragePathEntry
     };
-    use super::{IERC20Dispatcher, IERC20DispatcherTrait};
+    use synthetix_staking::interfaces::ierc20::{IERC20Dispatcher, IERC20DispatcherTrait};
+
+    const ONE_E18: u256 = 1000000000000000000_u256;
 
     #[storage]
     struct Storage {
@@ -66,7 +41,7 @@ mod StakingRewards {
     }
 
     #[abi(embed_v0)]
-    impl StakingRewardsImpl of super::IStakingRewards<ContractState> {
+    impl StakingRewardsImpl of IStakingRewards<ContractState> {
         fn last_time_reward_applicable(self: @ContractState) -> u256 {
             let block_timestamp: u256 = get_block_timestamp().try_into().unwrap();
 
@@ -77,7 +52,7 @@ mod StakingRewards {
             if self.total_supply.read() == 0 {
                 self.reward_per_token_stored.read()
             } else {
-                self.reward_per_token_stored.read() + (self.reward_rate.read() * (self.last_time_reward_applicable() - self.updated_at.read()) * (10 * 10 * 10) ) / self.total_supply.read()
+                self.reward_per_token_stored.read() + (self.reward_rate.read() * (self.last_time_reward_applicable() - self.updated_at.read()) * ONE_E18 ) / self.total_supply.read()
             }
         }
 
@@ -121,7 +96,7 @@ mod StakingRewards {
         }
 
         fn earned(self: @ContractState, account: ContractAddress) -> u256 {
-            ((self.balance_of.entry(account).read() * (self.reward_per_token() - self.user_reward_per_token_paid.entry(account).read())) / (10 * 10 * 10)) + self.rewards.entry(account).read()
+            ((self.balance_of.entry(account).read() * (self.reward_per_token() - self.user_reward_per_token_paid.entry(account).read())) / ONE_E18) + self.rewards.entry(account).read()
 
         }
 
