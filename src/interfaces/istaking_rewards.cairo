@@ -23,4 +23,6 @@ pub trait IStakingRewards<TContractState> {
     fn total_supply(self: @TContractState) -> u256;
     fn balance_of(self: @TContractState, user: ContractAddress) -> u256;
     fn owner(self: @TContractState) -> ContractAddress;
+
+    fn return_block_timestamp(self: @TContractState) -> u64;
 }

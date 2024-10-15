@@ -193,6 +193,10 @@ mod StakingRewards {
         fn owner(self: @ContractState) -> ContractAddress {
             self.owner.read()
         }
+
+        fn return_block_timestamp(self: @ContractState) -> u64 {
+            get_block_timestamp()
+        }
     }
 
     #[generate_trait]
