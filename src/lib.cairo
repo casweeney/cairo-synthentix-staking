@@ -11,6 +11,8 @@ mod StakingRewards {
     };
     use synthetix_staking::interfaces::ierc20::{IERC20Dispatcher, IERC20DispatcherTrait};
 
+    const ONE_E18: u256 = 1000000000000000000_u256;
+
     #[storage]
     struct Storage {
         staking_token: ContractAddress,
@@ -50,7 +52,7 @@ mod StakingRewards {
             if self.total_supply.read() == 0 {
                 self.reward_per_token_stored.read()
             } else {
-                self.reward_per_token_stored.read() + (self.reward_rate.read() * (self.last_time_reward_applicable() - self.updated_at.read()) * (10 * 10 * 10) ) / self.total_supply.read()
+                self.reward_per_token_stored.read() + (self.reward_rate.read() * (self.last_time_reward_applicable() - self.updated_at.read()) * ONE_E18 ) / self.total_supply.read()
             }
         }
 
@@ -94,7 +96,7 @@ mod StakingRewards {
         }
 
         fn earned(self: @ContractState, account: ContractAddress) -> u256 {
-            ((self.balance_of.entry(account).read() * (self.reward_per_token() - self.user_reward_per_token_paid.entry(account).read())) / (10 * 10 * 10)) + self.rewards.entry(account).read()
+            ((self.balance_of.entry(account).read() * (self.reward_per_token() - self.user_reward_per_token_paid.entry(account).read())) / ONE_E18) + self.rewards.entry(account).read()
 
         }
 

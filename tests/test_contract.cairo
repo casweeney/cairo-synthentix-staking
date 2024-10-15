@@ -2,10 +2,7 @@ use starknet::ContractAddress;
 
 use snforge_std::{declare, ContractClassTrait};
 
-use synthetix_staking::IHelloStarknetSafeDispatcher;
-use synthetix_staking::IHelloStarknetSafeDispatcherTrait;
-use synthetix_staking::IHelloStarknetDispatcher;
-use synthetix_staking::IHelloStarknetDispatcherTrait;
+use synthetix_staking::interfaces::istaking_rewards::{IStakingRewardsDispatcher, IStakingRewardsDispatcherTrait};
 
 fn deploy_contract(name: ByteArray) -> ContractAddress {
     let contract = declare(name).unwrap();
@@ -13,35 +10,26 @@ fn deploy_contract(name: ByteArray) -> ContractAddress {
     contract_address
 }
 
+// const ONE_E18: u256 = u256 { low: 1000000000000000000_u128, high: 0_u128 };
+const ONE_E18: u256 = 1000000000000000000_u256;
+
+
 #[test]
 fn test_increase_balance() {
-    let contract_address = deploy_contract("HelloStarknet");
+    // let contract_address = deploy_contract("HelloStarknet");
 
-    let dispatcher = IHelloStarknetDispatcher { contract_address };
+    // let dispatcher = IHelloStarknetDispatcher { contract_address };
 
-    let balance_before = dispatcher.get_balance();
-    assert(balance_before == 0, 'Invalid balance');
+    // let balance_before = dispatcher.get_balance();
+    // assert(balance_before == 0, 'Invalid balance');
 
-    dispatcher.increase_balance(42);
+    // dispatcher.increase_balance(42);
 
-    let balance_after = dispatcher.get_balance();
-    assert(balance_after == 42, 'Invalid balance');
-}
+    // let balance_after = dispatcher.get_balance();
+    // assert(balance_after == 42, 'Invalid balance');
 
-#[test]
-#[feature("safe_dispatcher")]
-fn test_cannot_increase_balance_with_zero_value() {
-    let contract_address = deploy_contract("HelloStarknet");
 
-    let safe_dispatcher = IHelloStarknetSafeDispatcher { contract_address };
+    assert(1 == 1, 'wrong number');
 
-    let balance_before = safe_dispatcher.get_balance().unwrap();
-    assert(balance_before == 0, 'Invalid balance');
-
-    match safe_dispatcher.increase_balance(0) {
-        Result::Ok(_) => core::panic_with_felt252('Should have panicked'),
-        Result::Err(panic_data) => {
-            assert(*panic_data.at(0) == 'Amount cannot be 0', *panic_data.at(0));
-        }
-    };
+    println!("{}", ONE_E18);
 }
