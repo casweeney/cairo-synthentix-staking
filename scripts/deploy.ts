@@ -33,6 +33,8 @@ async function main() {
     
     const constructor = myCallData.compile("constructor", {
         owner: process.env.DEPLOYER_ADDRESS ?? "",
+        staking_token: "0x227e1a8c4ee85feccab767c584c0b46f5c4062e97a9219a91ec75c86ce0a840",
+        reward_token: "0x702d2721fdcb98fae346bf1398e0702b27c8ccc97e75e632ff93653ece67253"
     });
 
     const deployResponse = await account0.declareAndDeploy({
