@@ -137,6 +137,42 @@ mod StakingRewards {
             self.finish_at.write(get_block_timestamp().try_into().unwrap() + self.duration.read());
             self.updated_at.write(get_block_timestamp().try_into().unwrap());
         }
+
+        fn duration(self: @ContractState) -> u256 {
+            self.duration.read()
+        }
+
+        fn finish_at(self: @ContractState) -> u256 {
+            self.finish_at.read()
+        }
+
+        fn updated_at(self: @ContractState) -> u256 {
+            self.updated_at.read()
+        }
+
+        fn reward_rate(self: @ContractState) -> u256 {
+            self.reward_rate.read()
+        }
+
+        fn reward_per_token_stored(self: @ContractState) -> u256 {
+            self.reward_per_token_stored.read()
+        }
+
+        fn user_reward_per_token_paid(self: @ContractState, user: ContractAddress) -> u256 {
+            self.user_reward_per_token_paid.entry(user).read()
+        }
+
+        fn rewards(self: @ContractState, user: ContractAddress) -> u256 {
+            self.rewards.entry(user).read()
+        }
+
+        fn total_supply(self: @ContractState) -> u256 {
+            self.total_supply.read()
+        }
+
+        fn balance_of(self: @ContractState, user: ContractAddress) -> u256 {
+            self.balance_of.entry(user).read()
+        }
     }
 
     #[generate_trait]
