@@ -1,6 +1,12 @@
-use starknet::{ContractAddress, get_block_timestamp};
+use starknet::{ContractAddress, get_block_timestamp, get_contract_address};
+use starknet::testing::set_block_timestamp;
 
-use snforge_std::{declare, ContractClassTrait, start_cheat_caller_address, stop_cheat_caller_address,};
+use snforge_std::{
+    declare, ContractClassTrait,
+    start_cheat_caller_address, stop_cheat_caller_address,
+    start_cheat_block_timestamp, stop_cheat_block_timestamp,
+    start_cheat_block_timestamp_global, stop_cheat_block_timestamp_global
+};
 
 use synthetix_staking::interfaces::istaking_rewards::{IStakingRewardsDispatcher, IStakingRewardsDispatcherTrait};
 use synthetix_staking::interfaces::ierc20::{IERC20Dispatcher, IERC20DispatcherTrait};
@@ -55,7 +61,6 @@ fn test_staking_constructor() {
 
     let owner: ContractAddress = starknet::contract_address_const::<0x123626789>();
 
-
     assert!(staking_contract.owner() == owner, "wrong owner");
     assert!(staking_contract.staking_token() == staking_token_address, "wrong staking token address");
     assert!(staking_contract.rewards_token() == reward_token_address, "wrong reward token address");
@@ -83,17 +88,17 @@ fn test_reward_duration() {
 
     let staking_contract = IStakingRewardsDispatcher { contract_address: staking_contract_address };
 
+    start_cheat_block_timestamp_global(1698152400);
+
     let owner: ContractAddress = starknet::contract_address_const::<0x123626789>();
     let block_timestamp: u256 = get_block_timestamp().try_into().unwrap();
     let duration: u256 = 1800_u256;
 
-    println!("Finsh at {}", staking_contract.finish_at());
-    println!("Duration {}", get_block_timestamp());
+    start_cheat_caller_address(staking_contract_address, owner);
+    staking_contract.set_rewards_duration(duration);
+    stop_cheat_caller_address(staking_contract_address);
 
-    // start_cheat_caller_address(staking_contract_address, owner);
-    // staking_contract.set_rewards_duration(block_timestamp + duration);
-    // stop_cheat_caller_address(staking_contract_address);
+    stop_cheat_block_timestamp_global();
 
-
-    // assert!(staking_contract.duration() == duration, "duration not properly set");
+    assert!(staking_contract.duration() == duration, "duration not properly set");
 }
