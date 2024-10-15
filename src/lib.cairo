@@ -121,8 +121,8 @@ mod StakingRewards {
         }
 
         fn earned(self: @ContractState, account: ContractAddress) -> u256 {
+            ((self.balance_of.entry(account).read() * (self.reward_per_token() - self.user_reward_per_token_paid.entry(account).read())) / (10 * 10 * 10)) + self.rewards.entry(account).read()
 
-            3
         }
 
         fn get_reward(ref self: ContractState) {
