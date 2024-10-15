@@ -1,2 +1,2 @@
 # Synthetix Staking Contract
-This repo is the implementation of Synthetix staking contract in Cairo lang.
+This repo contains the implementation of Synthetix staking rewards contract in Cairo lang.
