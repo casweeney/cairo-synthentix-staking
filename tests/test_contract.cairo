@@ -88,11 +88,11 @@ fn test_reward_duration() {
 
     let staking_contract = IStakingRewardsDispatcher { contract_address: staking_contract_address };
 
-    start_cheat_block_timestamp_global(1698152400);
-
     let owner: ContractAddress = starknet::contract_address_const::<0x123626789>();
-    let block_timestamp: u256 = get_block_timestamp().try_into().unwrap();
     let duration: u256 = 1800_u256;
+    
+    // using a block timestamp cheat to avoid get_block_timestamp() from returning 0: which is default on test environment
+    start_cheat_block_timestamp_global(1698152400);
 
     start_cheat_caller_address(staking_contract_address, owner);
     staking_contract.set_rewards_duration(duration);
