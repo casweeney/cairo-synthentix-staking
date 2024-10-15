@@ -12,7 +12,10 @@ fn deploy_token_contract(name: ByteArray) -> ContractAddress {
 }
 
 fn deploy_staking_contract(name: ByteArray, staking_token: ContractAddress, reward_token: ContractAddress) -> ContractAddress {
+    let owner: ContractAddress = starknet::contract_address_const::<0x123626789>();
+
     let mut constructor_calldata = ArrayTrait::new();
+    constructor_calldata.append(owner.into());
     constructor_calldata.append(staking_token.into());
     constructor_calldata.append(reward_token.into());
 
@@ -20,6 +23,27 @@ fn deploy_staking_contract(name: ByteArray, staking_token: ContractAddress, rewa
     let (contract_address, _) = contract.deploy(@constructor_calldata).unwrap();
 
     contract_address
+}
+
+#[test]
+fn test_token_mint() {
+    let staking_token_contract = deploy_token_contract("StakingToken");
+    let reward_token_contract = deploy_token_contract("RewardToken");
+    let staking_contract = deploy_staking_contract("StakingRewards", staking_token_contract, reward_token_contract);
+
+    let staking_token = IERC20Dispatcher { contract_address: staking_token_contract };
+    let reward_token = IERC20Dispatcher { contract_address: reward_token_contract };
+
+    let receiver: ContractAddress = starknet::contract_address_const::<0x123626789>();
+
+    let mint_amount: u256 = 10000_u256;
+    staking_token.mint(receiver, mint_amount);
+    reward_token.mint(receiver, mint_amount);
+
+    assert!(staking_token.balance_of(receiver) == mint_amount, "wrong staking token balance");
+    assert!(reward_token.balance_of(receiver) == mint_amount, "wrong reward token balance");
+    assert!(staking_token.balance_of(receiver) > 0, "balance failed to increase");
+    assert!(reward_token.balance_of(receiver) > 0, "balance didn't increase");
 }
 
 #[test]

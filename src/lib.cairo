@@ -34,9 +34,8 @@ mod StakingRewards {
     }
 
     #[constructor]
-    fn constructor(ref self: ContractState, staking_token: ContractAddress, reward_token: ContractAddress) {
-        let caller = get_caller_address();
-        self.owner.write(caller);
+    fn constructor(ref self: ContractState, owner: ContractAddress, staking_token: ContractAddress, reward_token: ContractAddress) {
+        self.owner.write(owner);
         self.staking_token.write(staking_token);
         self.rewards_token.write(reward_token);
     }
@@ -138,6 +137,14 @@ mod StakingRewards {
             self.updated_at.write(get_block_timestamp().try_into().unwrap());
         }
 
+        fn staking_token(self: @ContractState) -> ContractAddress {
+            self.staking_token.read()
+        }
+
+        fn rewards_token(self: @ContractState) -> ContractAddress {
+            self.rewards_token.read()
+        }
+
         fn duration(self: @ContractState) -> u256 {
             self.duration.read()
         }
@@ -172,6 +179,10 @@ mod StakingRewards {
 
         fn balance_of(self: @ContractState, user: ContractAddress) -> u256 {
             self.balance_of.entry(user).read()
+        }
+
+        fn owner(self: @ContractState) -> ContractAddress {
+            self.owner.read()
         }
     }
 
