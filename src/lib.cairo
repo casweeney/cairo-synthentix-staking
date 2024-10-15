@@ -136,7 +136,10 @@ mod StakingRewards {
         }
 
         fn set_rewards_duration(ref self: ContractState, duration: u256) {
+            let block_timestamp: u256 = get_block_timestamp().try_into().unwrap();
+            assert!(self.finish_at.read() < block_timestamp, "reward duration not finished");
 
+            self.duration.write(duration);
         }
 
         fn notify_reward_amount(ref self: ContractState, amount: u256) {
