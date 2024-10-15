@@ -101,7 +101,23 @@ mod StakingRewards {
         }
 
         fn withdraw(ref self: ContractState, amount: u256) {
+            let caller = get_caller_address();
 
+            self.update_reward(caller);
+
+            assert!(amount > 0, "amount = 0");
+
+            let prev_stake = self.balance_of.entry(caller).read();
+            assert!(prev_stake >= amount, "insufficient stake balance");
+            self.balance_of.entry(caller).write(prev_stake - amount);
+
+            let prev_supply = self.total_supply.read();
+            self.total_supply.write(prev_supply - amount);
+
+            let staking_token = IERC20Dispatcher { contract_address: self.staking_token.read() };
+            let transfer = staking_token.transfer(caller, amount);
+
+            assert!(transfer, "transfer failed");
         }
 
         fn earned(self: @ContractState, account: ContractAddress) -> u256 {
