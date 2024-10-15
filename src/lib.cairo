@@ -30,13 +30,13 @@ pub trait IStakingRewards<TContractState> {
 #[starknet::contract]
 mod StakingRewards {
     use core::num::traits::Zero;
-use super::IStakingRewards;
-use starknet::{ContractAddress, get_block_timestamp, get_caller_address};
+    use super::IStakingRewards;
+    use starknet::{ContractAddress, get_block_timestamp, get_caller_address, get_contract_address};
     use core::starknet::storage::{
         StoragePointerReadAccess, StoragePointerWriteAccess, 
-        Map, StoragePathEntry,
-        MutableVecTrait, Vec, VecTrait
+        Map, StoragePathEntry
     };
+    use super::{IERC20Dispatcher, IERC20DispatcherTrait};
 
     #[storage]
     struct Storage {
@@ -74,7 +74,7 @@ use starknet::{ContractAddress, get_block_timestamp, get_caller_address};
         }
 
         fn reward_per_token(self: @ContractState) -> u256 {
-            if self.total_supply.read() == 0.into() {
+            if self.total_supply.read() == 0 {
                 self.reward_per_token_stored.read()
             } else {
                 self.reward_per_token_stored.read() + (self.reward_rate.read() * (self.last_time_reward_applicable() - self.updated_at.read()) * (10 * 10 * 10) ) / self.total_supply.read()
@@ -82,7 +82,22 @@ use starknet::{ContractAddress, get_block_timestamp, get_caller_address};
         }
 
         fn stake(ref self: ContractState, amount: u256) {
+            let caller = get_caller_address();
+            let this_contract = get_contract_address();
 
+            self.update_reward(caller);
+
+            assert!(amount > 0, "amount = 0");
+            let staking_token = IERC20Dispatcher { contract_address: self.staking_token.read() };
+            let transfer = staking_token.transfer_from(caller, this_contract, amount);
+
+            assert!(transfer, "transfer failed");
+
+            let prev_stake = self.balance_of.entry(caller).read();
+            self.balance_of.entry(caller).write(prev_stake + amount);
+
+            let prev_supply = self.total_supply.read();
+            self.total_supply.write(prev_supply + amount);
         }
 
         fn withdraw(ref self: ContractState, amount: u256) {
