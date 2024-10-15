@@ -126,7 +126,13 @@ mod StakingRewards {
         }
 
         fn get_reward(ref self: ContractState) {
+            let caller = get_caller_address();
+            let reward = self.rewards.entry(caller).read();
 
+            if reward > 0 {
+                self.rewards.entry(caller).write(0);
+                IERC20Dispatcher { contract_address: self.rewards_token.read() }.transfer(caller, reward);
+            }
         }
 
         fn set_rewards_duration(ref self: ContractState, duration: u256) {
