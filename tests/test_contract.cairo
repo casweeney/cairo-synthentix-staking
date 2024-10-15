@@ -10,9 +10,6 @@ fn deploy_contract(name: ByteArray) -> ContractAddress {
     contract_address
 }
 
-// const ONE_E18: u256 = u256 { low: 1000000000000000000_u128, high: 0_u128 };
-const ONE_E18: u256 = 1000000000000000000_u256;
-
 
 #[test]
 fn test_increase_balance() {
@@ -30,6 +27,4 @@ fn test_increase_balance() {
 
 
     assert(1 == 1, 'wrong number');
-
-    println!("{}", ONE_E18);
 }

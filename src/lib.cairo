@@ -1,4 +1,5 @@
 pub mod interfaces;
+pub mod mocks;
 
 #[starknet::contract]
 mod StakingRewards {
