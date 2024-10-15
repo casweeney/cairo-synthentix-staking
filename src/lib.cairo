@@ -39,7 +39,7 @@ mod StakingRewards {
     }
 
     #[abi(embed_v0)]
-    impl StakingRewardsImpl of super::IStakingRewards<ContractState> {
+    impl StakingRewardsImpl of IStakingRewards<ContractState> {
         fn last_time_reward_applicable(self: @ContractState) -> u256 {
             let block_timestamp: u256 = get_block_timestamp().try_into().unwrap();
 
