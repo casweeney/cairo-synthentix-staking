@@ -1,10 +1,9 @@
-use starknet::{ContractAddress, get_block_timestamp, get_contract_address};
+use starknet::{ContractAddress, get_contract_address};
 use starknet::testing::set_block_timestamp;
 
 use snforge_std::{
     declare, ContractClassTrait,
     start_cheat_caller_address, stop_cheat_caller_address,
-    start_cheat_block_timestamp, stop_cheat_block_timestamp,
     start_cheat_block_timestamp_global, stop_cheat_block_timestamp_global
 };
 
@@ -249,6 +248,11 @@ fn test_earned() {
 
     // testing user earnings
     assert!(staking_contract.earned(owner) > 0, "earnings didn't increase");
+    assert!(staking_contract.rewards(owner) > 0, "rewards didn't increase");
+
+    assert!(staking_contract.reward_per_token_stored() > 0, "wrong reward_per_token_stored");
+    assert!(staking_contract.user_reward_per_token_paid(owner) > 0, "wrong user_reward_per_token_paid");
+
 
     stop_cheat_block_timestamp_global();
 
