@@ -194,3 +194,62 @@ fn test_stake() {
 
     stop_cheat_block_timestamp_global();
 }
+
+#[test]
+fn test_earned() {
+    let staking_token_address = deploy_token_contract("StakingToken");
+    let reward_token_address = deploy_token_contract("RewardToken");
+    let staking_contract_address = deploy_staking_contract("StakingRewards", staking_token_address, reward_token_address);
+
+    let staking_token = IERC20Dispatcher { contract_address: staking_token_address };
+    let reward_token = IERC20Dispatcher { contract_address: reward_token_address };
+    let staking_contract = IStakingRewardsDispatcher { contract_address: staking_contract_address };
+
+    let owner: ContractAddress = starknet::contract_address_const::<0x123626789>();
+
+    let mint_amount: u256 = 10000_u256 * ONE_E18;
+    staking_token.mint(owner, mint_amount);
+    reward_token.mint(owner, mint_amount);
+
+    assert!(staking_token.balance_of(owner) == mint_amount, "wrong staking token balance");
+    assert!(reward_token.balance_of(owner) == mint_amount, "wrong reward token balance");
+
+    // Transfer reward token into staking contract
+    start_cheat_caller_address(reward_token_address, owner);
+    reward_token.transfer(staking_contract_address, mint_amount);
+    stop_cheat_caller_address(reward_token_address);
+    assert!(reward_token.balance_of(staking_contract_address) == mint_amount, "reward token transfer failed");
+
+    // Approve staking contract to spend staking token.
+    start_cheat_caller_address(staking_token_address, owner);
+    staking_token.approve(staking_contract_address, mint_amount);
+    stop_cheat_caller_address(staking_token_address);
+    assert!(staking_token.allowance(owner, staking_contract_address) == mint_amount, "staking token approval failed");
+
+    let duration: u256 = 1800_u256;
+    let stake_amount = 100_u256 * ONE_E18;
+    
+    // using a block timestamp cheat to prevent get_block_timestamp() from returning 0: which is default on test environment
+    start_cheat_block_timestamp_global(1698152400);
+    start_cheat_caller_address(staking_contract_address, owner);
+    staking_contract.set_rewards_duration(duration);
+    staking_contract.notify_reward_amount(mint_amount);
+    staking_contract.stake(stake_amount);
+    stop_cheat_caller_address(staking_contract_address);
+    stop_cheat_block_timestamp_global();
+
+    // Using a 10mins increased block_timestamp to stake again
+    start_cheat_block_timestamp_global(1698153000);
+    start_cheat_caller_address(staking_contract_address, owner);
+    staking_contract.stake(stake_amount);
+    stop_cheat_caller_address(staking_contract_address);
+
+    assert!(staking_contract.total_supply() == stake_amount + stake_amount, "stake failed");
+    assert!(staking_token.balance_of(staking_contract_address) == stake_amount + stake_amount, "stake didn't work");
+
+    // testing user earnings
+    assert!(staking_contract.earned(owner) > 0, "earnings didn't increase");
+
+    stop_cheat_block_timestamp_global();
+
+}
