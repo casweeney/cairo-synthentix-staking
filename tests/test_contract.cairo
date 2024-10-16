@@ -11,6 +11,8 @@ use snforge_std::{
 use synthetix_staking::interfaces::istaking_rewards::{IStakingRewardsDispatcher, IStakingRewardsDispatcherTrait};
 use synthetix_staking::interfaces::ierc20::{IERC20Dispatcher, IERC20DispatcherTrait};
 
+const ONE_E18: u256 = 1000000000000000000_u256;
+
 fn deploy_token_contract(name: ByteArray) -> ContractAddress {
     let contract = declare(name).unwrap();
     let (contract_address, _) = contract.deploy(@ArrayTrait::new()).unwrap();
@@ -81,7 +83,7 @@ fn test_set_reward_duration_should_panic() {
 }
 
 #[test]
-fn test_reward_duration() {
+fn test_set_rewards_duration() {
     let staking_token_address = deploy_token_contract("StakingToken");
     let reward_token_address = deploy_token_contract("RewardToken");
     let staking_contract_address = deploy_staking_contract("StakingRewards", staking_token_address, reward_token_address);
@@ -98,7 +100,48 @@ fn test_reward_duration() {
     staking_contract.set_rewards_duration(duration);
     stop_cheat_caller_address(staking_contract_address);
 
+    assert!(staking_contract.duration() == duration, "duration not properly set");
+
     stop_cheat_block_timestamp_global();
+}
+
+#[test]
+fn test_notify_reward_amount() {
+    let staking_token_address = deploy_token_contract("StakingToken");
+    let reward_token_address = deploy_token_contract("RewardToken");
+    let staking_contract_address = deploy_staking_contract("StakingRewards", staking_token_address, reward_token_address);
+
+    let staking_token = IERC20Dispatcher { contract_address: staking_token_address };
+    let reward_token = IERC20Dispatcher { contract_address: reward_token_address };
+    let staking_contract = IStakingRewardsDispatcher { contract_address: staking_contract_address };
+
+    let owner: ContractAddress = starknet::contract_address_const::<0x123626789>();
+
+    let mint_amount: u256 = 10000_u256 * ONE_E18;
+    staking_token.mint(owner, mint_amount);
+    reward_token.mint(owner, mint_amount);
+
+    assert!(staking_token.balance_of(owner) == mint_amount, "wrong staking token balance");
+    assert!(reward_token.balance_of(owner) == mint_amount, "wrong reward token balance");
+
+    // Transfer reward token into staking contract
+    start_cheat_caller_address(reward_token_address, owner);
+    reward_token.transfer(staking_contract_address, mint_amount);
+    stop_cheat_caller_address(reward_token_address);
+    assert!(reward_token.balance_of(staking_contract_address) == mint_amount, "reward token transfer failed");
+
+    let duration: u256 = 1800_u256;
+    
+    // using a block timestamp cheat to avoid get_block_timestamp() from returning 0: which is default on test environment
+    start_cheat_block_timestamp_global(1698152400);
+
+    start_cheat_caller_address(staking_contract_address, owner);
+    staking_contract.set_rewards_duration(duration);
+    staking_contract.notify_reward_amount(mint_amount);
+    stop_cheat_caller_address(staking_contract_address);
 
     assert!(staking_contract.duration() == duration, "duration not properly set");
+    assert!(staking_contract.finish_at() == staking_contract.return_block_timestamp() + duration, "reward notification failed");
+
+    stop_cheat_block_timestamp_global();
 }

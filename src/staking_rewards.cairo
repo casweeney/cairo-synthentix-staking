@@ -194,8 +194,8 @@ mod StakingRewards {
             self.owner.read()
         }
 
-        fn return_block_timestamp(self: @ContractState) -> u64 {
-            get_block_timestamp()
+        fn return_block_timestamp(self: @ContractState) -> u256 {
+            get_block_timestamp().try_into().unwrap()
         }
     }
 
