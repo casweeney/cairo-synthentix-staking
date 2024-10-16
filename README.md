@@ -2,7 +2,7 @@
 This repo contains the implementation of Synthetix staking rewards contract in Cairo lang.
 
 ## Challenges
-The unit & integration test for this contract was done with manipulated block_timestamp because at the time of writing this contract, `get_block_timestamp()` function on Starknet test, was return `0` and most of the functions depended on that.
+The unit & integration test for this contract was done with manipulated block_timestamp because at the time of writing this contract, `get_block_timestamp()` function on Starknet test, returns `0` and most of the functions depended on that.
 
 A confirmation test was done onchain, the contract was deployed on Starknet Sepolia and was tested via https://sepolia.voyager.online. Everything works fine as expected.
 
