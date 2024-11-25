@@ -99,6 +99,9 @@ mod StakingRewards {
 
         fn get_reward(ref self: ContractState) {
             let caller = get_caller_address();
+
+            self.update_reward(caller);
+
             let reward = self.rewards.entry(caller).read();
 
             if reward > 0 {
