@@ -124,6 +124,8 @@ mod StakingRewards {
 
         fn notify_reward_amount(ref self: ContractState, amount: u256) {
             let caller = get_caller_address();
+            let this_contract = get_contract_address();
+
             assert!(caller == self.owner.read(), "not authorized");
 
             let zero_address = self.zero_address();
@@ -131,6 +133,10 @@ mod StakingRewards {
             self.update_reward(zero_address);
 
             let block_timestamp: u256 = get_block_timestamp().try_into().unwrap();
+            let rewards_token = IERC20Dispatcher { contract_address: self.rewards_token.read() };
+
+            let transfer_from = rewards_token.transfer_from(caller, this_contract, amount);
+            assert!(transfer_from, "transfer failed");
 
             if block_timestamp >= self.finish_at.read() {
                 self.reward_rate.write(amount / self.duration.read())
@@ -140,10 +146,8 @@ mod StakingRewards {
                 self.reward_rate.write((amount + remaining_rewards) / self.duration.read());
             }
 
-            let rewards_token = IERC20Dispatcher { contract_address: self.rewards_token.read() };
-
             assert!(self.reward_rate.read() > 0, "reward rate = 0");
-            assert!(self.reward_rate.read() * self.duration.read() <= rewards_token.balance_of(get_contract_address()), "reward amount > balance");
+            assert!(self.reward_rate.read() * self.duration.read() <= rewards_token.balance_of(this_contract), "reward amount > balance");
 
             self.finish_at.write(get_block_timestamp().try_into().unwrap() + self.duration.read());
             self.updated_at.write(get_block_timestamp().try_into().unwrap());
